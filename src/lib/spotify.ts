@@ -1,3 +1,6 @@
+import type { SpotifyError, UserProfile } from '$lib/types/spotify'
+import { isNil } from '$lib/utils'
+
 export const clientId = '8f5ffc8e8f4e4ccf8c0c241cf6092d6b'
 /*
 const clientId = '8f5ffc8e8f4e4ccf8c0c241cf6092d6b'
@@ -23,7 +26,7 @@ export async function getAuthRedirect (clientId: string): Promise<string> {
   const params = new URLSearchParams()
   params.append('client_id', clientId)
   params.append('response_type', 'code')
-  params.append('redirect_uri', 'http://localhost:5173/login')
+  params.append('redirect_uri', 'http://localhost:5173/create')
   params.append('scope', 'user-read-private user-read-email')
   params.append('code_challenge_method', 'S256')
   params.append('code_challenge', challenge)
@@ -57,7 +60,7 @@ export async function getAccessToken (clientId: string, code: string): Promise<s
   params.append('client_id', clientId)
   params.append('grant_type', 'authorization_code')
   params.append('code', code)
-  params.append('redirect_uri', 'http://localhost:5173/login')
+  params.append('redirect_uri', 'http://localhost:5173/create')
   params.append('code_verifier', verifier!)
 
   const result = await fetch('https://accounts.spotify.com/api/token', {
@@ -66,11 +69,17 @@ export async function getAccessToken (clientId: string, code: string): Promise<s
     body: params
   })
 
-  const { access_token: accessToken } = await result.json()
+  const resultAsJson = await result.json()
+
+  const { access_token: accessToken } = resultAsJson
+
+  if (isNil(accessToken)) {
+    throw new Error(resultAsJson.error)
+  }
   return accessToken
 }
 
-export async function fetchProfile (token: string): Promise<any> {
+export async function fetchProfile (token: string): Promise<UserProfile> {
   const result = await fetch('https://api.spotify.com/v1/me', {
     method: 'GET', headers: { Authorization: `Bearer ${token}` }
   })
