@@ -3,8 +3,8 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
+		"dev": "rollup -cw",
+		"build": "rollup -c",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -25,9 +25,21 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@rollup/plugin-commonjs": "^25.0.4",
+		"@rollup/plugin-json": "^6.0.0",
+		"@rollup/plugin-node-resolve": "^15.1.0",
+		"@rollup/plugin-terser": "^0.4.3",
+		"@rollup/plugin-typescript": "^11.1.2",
+		"@spotify/web-api-ts-sdk": "^1.1.0",
 		"eslint-config-standard-with-typescript": "^36.1.0",
 		"eslint-plugin-import": "^2.25.2",
 		"eslint-plugin-n": "^15.0.0",
-		"eslint-plugin-promise": "^6.0.0"
+		"eslint-plugin-promise": "^6.0.0",
+		"rollup": "^3.28.0",
+		"rollup-plugin-alias": "^2.2.0",
+		"rollup-plugin-serve": "^2.0.2",
+		"rollup-plugin-svelte": "^7.1.6",
+		"rollup-plugin-typescript-paths": "^1.4.0",
+		"svelte-preprocess": "^5.0.4"
 	}
 }

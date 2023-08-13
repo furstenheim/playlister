@@ -8,6 +8,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
+    "importsNotUsedAsValues": "remove",
     "strict": true,
     "baseUrl": ".",
     "paths": {
