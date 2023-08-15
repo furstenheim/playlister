@@ -50,3 +50,10 @@
 {:else}
 <Search profile={profile} token={accessToken}></Search>
 {/if}
+
+<style global>
+    body {
+        font-family: 'SansSerif', sans-serif;
+        font-size: 13px;
+    }
+</style>

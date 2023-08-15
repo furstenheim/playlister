@@ -37,6 +37,8 @@
 		"eslint-plugin-promise": "^6.0.0",
 		"rollup": "^3.28.0",
 		"rollup-plugin-alias": "^2.2.0",
+		"rollup-plugin-livereload": "^2.0.5",
+		"rollup-plugin-postcss": "^4.0.2",
 		"rollup-plugin-serve": "^2.0.2",
 		"rollup-plugin-svelte": "^7.1.6",
 		"rollup-plugin-typescript-paths": "^1.4.0",
