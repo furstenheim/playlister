@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { clientId, fetchProfile, getAccessToken, getAuthRedirect } from '$lib/spotify'
+  import { clientId, fetchProfile, getAccessToken, getAccessTokenFromLocalStorage, getAuthRedirect } from '$lib/spotify'
   import type { UserProfile } from '$lib/types/spotify'
   import Search from './Search.svelte'
   import { isNil } from '$lib/utils.ts'
@@ -7,7 +7,7 @@
 
   let profile: UserProfile | null = null
   let accessToken: AccessToken
-  const ACCESS_TOKEN_KEY = 'access_token_key'
+
   void load()
 
   async function load (): Promise<void> {
@@ -16,20 +16,14 @@
 
     console.log('code', code)
     if (isNil(code)) {
-      try {
-        accessToken = JSON.parse(localStorage.getItem(ACCESS_TOKEN_KEY))
-      } catch (e) {
-        console.error('Could not fetch access token from local storage', e)
-      }
+      accessToken = await getAccessTokenFromLocalStorage()
       if (isNil(accessToken)) {
         await redirect()
         return
       }
     } else {
       try {
-        // TODO store the code in local storage
         accessToken = await getAccessToken(clientId, code)
-        localStorage.setItem(ACCESS_TOKEN_KEY, JSON.stringify(accessToken))
       } catch (e) {
         await redirect()
         return

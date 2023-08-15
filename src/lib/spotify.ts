@@ -1,9 +1,10 @@
-  import type { SpotifyError, UserProfile } from '$lib/types/spotify'
+import type { UserProfile } from '$lib/types/spotify'
 import * as spotify from '@spotify/web-api-ts-sdk'
-import { isNil } from '$lib/utils'
+import { getTimeAfterSeconds, isNil, isTimeExpired } from '$lib/utils'
 import { type Artist, type Page } from '@spotify/web-api-ts-sdk/src/types'
-import { type AccessToken } from '@spotify/web-api-ts-sdk'
+import { type AccessToken, type SimplifiedAlbum } from '@spotify/web-api-ts-sdk'
 
+const ACCESS_TOKEN_KEY = 'access_token_key_v3'
 export const clientId = '8f5ffc8e8f4e4ccf8c0c241cf6092d6b'
 /*
 const clientId = '8f5ffc8e8f4e4ccf8c0c241cf6092d6b'
@@ -56,6 +57,21 @@ async function generateCodeChallenge (codeVerifier: string): Promise<string> {
     .replace(/=+$/, '')
 }
 
+export async function getAccessTokenFromLocalStorage (): Promise<AccessToken | null> {
+  try {
+    const storedToken = localStorage.getItem(ACCESS_TOKEN_KEY)
+    console.log(storedToken)
+    if (!isNil(storedToken)) {
+      const accessToken: AccessTokenWithExpiration = JSON.parse(storedToken)
+      if (!isTimeExpired(accessToken.expiration)) {
+        return accessToken.accessToken
+      }
+    }
+  } catch (e) {
+    console.error('Could not fetch access token from local storage', e)
+  }
+  return null
+}
 export async function getAccessToken (clientId: string, code: string): Promise<AccessToken> {
   const verifier = localStorage.getItem('verifier')
 
@@ -79,6 +95,9 @@ export async function getAccessToken (clientId: string, code: string): Promise<A
   if (isNil(accessToken)) {
     throw new Error(resultAsJson.error)
   }
+
+  const accessTokenWithExpiration: AccessTokenWithExpiration = {expiration: getTimeAfterSeconds(resultAsJson.expires_in), accessToken: resultAsJson }
+  localStorage.setItem(ACCESS_TOKEN_KEY, JSON.stringify(accessTokenWithExpiration))
   return resultAsJson
 }
 
@@ -95,4 +114,22 @@ export async function searchArtists (token: AccessToken, searchString: string): 
   const { artists } = await sdk.search(searchString, ['artist'])
   console.log(artists)
   return artists
+}
+
+export async function searchAlbums (token: AccessToken, artist: Artist): Promise<SimplifiedAlbum[]> {
+  const sdk = spotify.SpotifyApi.withAccessToken(clientId, token)
+  /*
+    Possible values
+    - album
+    - single
+    - appears_on
+    - compilation */
+  const includeGroups = ['album', 'single']
+  const albums = await sdk.artists.albums(artist.id, includeGroups.join(','))
+  return albums.items
+}
+
+interface AccessTokenWithExpiration {
+  expiration: number // number instead of date to be able to searialize properly
+  accessToken: AccessToken
 }

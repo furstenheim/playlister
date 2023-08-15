@@ -1,15 +1,30 @@
 <script lang="ts">
   import { type Artist } from '@spotify/web-api-ts-sdk/src/types'
+  import DiskChooser from './DiskChooser.svelte'
 
   export let artist: Artist
+  export let accessToken: accessToken
+
+  let isOpen = false
+
+  const handleClick = function (): void {
+    isOpen = !isOpen
+  }
 </script>
 
-<div class="artist-container">
+<div class="artist-container" on:click="{handleClick}">
   {#if artist.images.length > 0}
     <img height="40px" width="40px" src="{artist.images[0].url}" alt="{artist.name + '-image'}"/>
   {/if}
   <p class="artist-title">{artist.name}</p>
 </div>
+
+{#if isOpen}
+  <div style="margin: 4px">
+    <DiskChooser artist="{artist}" accessToken="{accessToken}"></DiskChooser>
+  </div>
+
+{/if}
 
 <style>
   .artist-container {
@@ -23,9 +38,17 @@
       border: 2px groove darkgreen;
   }
 
+  .artist-container:hover {
+      transform: scale(1.01, 1.01);
+  }
+
   .artist-title {
       font-weight: bold;
       margin-left: 3px;
+  }
+
+  .disks-container {
+
   }
 
 </style>
