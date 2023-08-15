@@ -7,6 +7,7 @@
 
   let profile: UserProfile | null = null
   let accessToken: AccessToken
+  const ACCESS_TOKEN_KEY = 'access_token_key'
   void load()
 
   async function load (): Promise<void> {
@@ -15,21 +16,30 @@
 
     console.log('code', code)
     if (isNil(code)) {
-      await redirect()
+      try {
+        accessToken = JSON.parse(localStorage.getItem(ACCESS_TOKEN_KEY))
+      } catch (e) {
+        console.error('Could not fetch access token from local storage', e)
+      }
+      if (isNil(accessToken)) {
+        await redirect()
+        return
+      }
     } else {
       try {
         // TODO store the code in local storage
         accessToken = await getAccessToken(clientId, code)
+        localStorage.setItem(ACCESS_TOKEN_KEY, JSON.stringify(accessToken))
       } catch (e) {
         await redirect()
         return
       }
-      profile = await fetchProfile(accessToken)
-      console.log(profile)
     }
+    profile = await fetchProfile(accessToken)
+    console.log(profile)
   }
 
-  async function redirect () {
+  async function redirect (): Promise<void> {
     const authRedirect = await getAuthRedirect(clientId)
     document.location = authRedirect
   }
