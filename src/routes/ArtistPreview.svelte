@@ -1,9 +1,12 @@
 <script lang="ts">
   import { type Artist } from '@spotify/web-api-ts-sdk/src/types'
   import DiskChooser from './DiskChooser.svelte'
+  import type { UserProfile } from '$lib/types/spotify.d.ts'
+  import {AccessToken} from '@spotify/web-api-ts-sdk'
 
   export let artist: Artist
-  export let accessToken: accessToken
+  export let profile: UserProfile
+  export let accessToken: AccessToken
 
   let isOpen = false
 
@@ -25,7 +28,7 @@
 
 {#if isOpen}
   <div style="margin: 4px">
-    <DiskChooser artist="{artist}" accessToken="{accessToken}"></DiskChooser>
+    <DiskChooser profile={profile} artist="{artist}" accessToken="{accessToken}"></DiskChooser>
   </div>
 
 {/if}

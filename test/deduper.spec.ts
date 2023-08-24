@@ -11,7 +11,7 @@ describe('Dedupe', function () {
     console.log(superTrampSongs)
     const deduped = dedupeTracks(superTrampSongs as unknown as SimplifiedTrack[])
     const [selected, nonSelected] = partition(deduped, 'selected')
-    console.log(JSON.stringify(selected, null, 2))
+    console.log(JSON.stringify(nonSelected, null, 2))
     console.log(selected.length, nonSelected.length, superTrampSongs.length)
   })
 
@@ -66,7 +66,15 @@ describe('Dedupe', function () {
   {
     song: 'Rudy',
     expected: false
-  }
+  },
+  {
+    song: 'If Everyone Was Listening - Live At Hammersmith Odeon / 1975',
+    expected: true
+  },
+    {
+      song: 'Hotel California - Live; 1999 Remaster',
+      expected: true
+    }
   ]
   liveTests.forEach((test, i) => {
     it(`live ${i}`, function () {

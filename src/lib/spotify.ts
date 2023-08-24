@@ -1,8 +1,8 @@
 import type { UserProfile } from '$lib/types/spotify'
 import * as spotify from '@spotify/web-api-ts-sdk'
-import {compareTwoStrings, getTimeAfterSeconds, isNil, isTimeExpired} from '$lib/utils'
+import { compareTwoStrings, getTimeAfterSeconds, isNil, isTimeExpired } from '$lib/utils'
 import { type Artist, type Page } from '@spotify/web-api-ts-sdk/src/types'
-import { type AccessToken, type SimplifiedAlbum, type SimplifiedTrack } from '@spotify/web-api-ts-sdk'
+import { type AccessToken, type Playlist, type SimplifiedAlbum, type SimplifiedTrack } from '@spotify/web-api-ts-sdk'
 
 const ACCESS_TOKEN_KEY = 'access_token_key_v3'
 export const clientId = '8f5ffc8e8f4e4ccf8c0c241cf6092d6b'
@@ -31,7 +31,7 @@ export async function getAuthRedirect (clientId: string): Promise<string> {
   params.append('client_id', clientId)
   params.append('response_type', 'code')
   params.append('redirect_uri', 'http://localhost:5173')
-  params.append('scope', 'user-read-private user-read-email')
+  params.append('scope', 'user-read-private user-read-email playlist-modify-private playlist-modify-public')
   params.append('code_challenge_method', 'S256')
   params.append('code_challenge', challenge)
 
@@ -82,7 +82,7 @@ export async function getAccessToken (clientId: string, code: string): Promise<A
   params.append('redirect_uri', 'http://localhost:5173')
   params.append('code_verifier', verifier!)
 
-  const result = await fetch('https://accounts.spotify.com/api/token', {
+  const result = await fetch('https://accounts.spotify.com/api/token?', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: params
@@ -135,6 +135,18 @@ export async function searchTracks (token: AccessToken, album: SimplifiedAlbum):
   return tracks.items
 }
 
+export async function createPlaylist (token: AccessToken, userId: string, playlistName: string): Promise<Playlist> {
+  const sdk = spotify.SpotifyApi.withAccessToken(clientId, token)
+  const playlist = await sdk.playlists.createPlaylist(userId, { name: playlistName, public: false })
+  return playlist
+}
+
+// Max 100 songs
+export async function addItemsToPlaylist (token: AccessToken, playlist: Playlist, songs: SimplifiedTrack[]): Promise<void> {
+  const sdk = spotify.SpotifyApi.withAccessToken(clientId, token)
+  await sdk.playlists.addItemsToPlaylist(playlist.id, songs.map(s => s.uri))
+}
+
 export interface SelectedTrack {
   selected: boolean
   track: SimplifiedTrack
@@ -144,6 +156,13 @@ export function dedupeTracks (tracks: SimplifiedTrack[]): SelectedTrack[] {
   // eslint-disable-next-line no-labels
   mainLoop: for (let i = 0; i < tracks.length; i++) {
     const track1 = tracks[i]
+    if (isSongLive(track1.name) || isSongRemastered(track1.name)) {
+      result.push({
+        selected: false,
+        track: track1
+      })
+      continue
+    }
     for (let j = i + 1; j < tracks.length; j++) {
       const track2 = tracks[2]
       if (isSongDuped(track1.name, track2.name)) {
@@ -165,11 +184,16 @@ export function dedupeTracks (tracks: SimplifiedTrack[]): SelectedTrack[] {
 
 export function isSongDuped (firstSong: string, secondSong: string): boolean {
   // Rudy - Live At Hammersmith Odeon / 1975 should not be pushed if Rudy is there
-  return isSongLive(firstSong) || (!isSongLive(secondSong) && (firstSong.startsWith(secondSong) || compareTwoStrings(firstSong, secondSong) > 0.6))
+  return (!isSongLive(secondSong) && !isSongRemastered(secondSong)) && (firstSong.startsWith(secondSong) || compareTwoStrings(firstSong, secondSong) > 0.6)
 }
 
 export function isSongLive (songName: string): boolean {
-  const liveRegexes = [/-.*Directo.*/i, /-.*Live At.*/i]
+  const liveRegexes = [/-.*Directo.*/i, /-.*Live.*/i]
+  return liveRegexes.find(r => songName.match(r)) !== undefined
+}
+
+export function isSongRemastered (songName: string): boolean {
+  const liveRegexes = [/-.*Remastered.*/i, /-.*Remaster.*/i]
   return liveRegexes.find(r => songName.match(r)) !== undefined
 }
 
@@ -177,4 +201,3 @@ interface AccessTokenWithExpiration {
   expiration: number // number instead of date to be able to searialize properly
   accessToken: AccessToken
 }
-

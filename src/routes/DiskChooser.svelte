@@ -1,11 +1,13 @@
 <script lang="ts">
 
   import { isNil } from '$lib/utils'
-  import { orderBy } from 'lodash-es'
+  import { chunk, orderBy, partition } from 'lodash-es'
   import { type AccessToken, type SimplifiedAlbum } from '@spotify/web-api-ts-sdk'
   import { type Artist } from '@spotify/web-api-ts-sdk/src/types'
-  import { searchAlbums, searchTracks } from '$lib/spotify'
+  import { addItemsToPlaylist, createPlaylist, dedupeTracks, searchAlbums, searchTracks } from '$lib/spotify'
+  import type { UserProfile } from '$lib/types/spotify'
 
+  export let profile: UserProfile
   export let artist: Artist
   export let accessToken: AccessToken
 
@@ -41,7 +43,7 @@
   $: isGeneratingList = false
   let generatingListErrorMessage: string | null
   $: generatingListErrorMessage = null
-  let generatingPercentage
+  let generatingPercentage: number
   $: generatingPercentage = 0
   let isSuccessList: boolean
   $: isSuccessList = false
@@ -62,7 +64,18 @@
         const albumTracks = await searchTracks(accessToken, album)
         tracks.push(...albumTracks)
       }
-      console.log(tracks)
+      const [selected, nonSelected] = partition(dedupeTracks(tracks), 'selected')
+      generatingPercentage = 0
+      const groupsOfSongs = chunk(selected, 100)
+      const playlist = await createPlaylist(accessToken, profile.id, playlistName)
+
+      console.log('nonselected', nonSelected)
+      console.log('selected', selected)
+      for (const group of groupsOfSongs) {
+        console.log(group)
+        await addItemsToPlaylist(accessToken, playlist, group.map(s => s.track))
+        generatingPercentage += 1 / groupsOfSongs.length
+      }
       isSuccessList = true
     } catch (e) {
       generatingListErrorMessage = e.message

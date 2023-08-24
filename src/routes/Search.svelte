@@ -34,7 +34,7 @@
 <ul style="list-style-type: none; padding-left: 0">
   {#each artists.slice(0, 10) as artist (artist.id)}
     <li>
-      <ArtistPreview artist="{artist}" accessToken="{token}"></ArtistPreview>
+      <ArtistPreview profile={profile} artist="{artist}" accessToken="{token}"></ArtistPreview>
     </li>
   {/each}
 
