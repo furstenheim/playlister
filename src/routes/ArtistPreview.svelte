@@ -10,6 +10,10 @@
   const handleClick = function (): void {
     isOpen = !isOpen
   }
+
+  if (artist.name === 'Eagles') {
+    handleClick()
+  }
 </script>
 
 <div class="artist-container" on:click="{handleClick}">

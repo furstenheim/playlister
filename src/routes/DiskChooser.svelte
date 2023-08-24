@@ -1,19 +1,25 @@
 <script lang="ts">
 
   import { isNil } from '$lib/utils'
-  import { type AccessToken, type Album } from '@spotify/web-api-ts-sdk'
+  import { orderBy } from 'lodash-es'
+  import { type AccessToken, type SimplifiedAlbum } from '@spotify/web-api-ts-sdk'
   import { type Artist } from '@spotify/web-api-ts-sdk/src/types'
-  import { searchAlbums } from '$lib/spotify'
+  import { searchAlbums, searchTracks } from '$lib/spotify'
 
   export let artist: Artist
   export let accessToken: AccessToken
-  let albums: Album[]
+
+  let playlistName = artist.name
+
+  let albums: SimplifiedAlbum[]
   $: albums = []
   let isLoading: boolean
   let errorMessage: string | null
   $: errorMessage = null
   $: isLoading = true
-  console.log('Loading')
+
+  let nonSelectedAlbums: Record<string, boolean>
+  $: nonSelectedAlbums = {}
 
   async function loading (): Promise<void> {
     try {
@@ -27,6 +33,44 @@
 
   void loading()
 
+  function handleClick (albumId: string): void {
+    nonSelectedAlbums[albumId] = !(nonSelectedAlbums[albumId] ?? false)
+  }
+
+  let isGeneratingList: boolean
+  $: isGeneratingList = false
+  let generatingListErrorMessage: string | null
+  $: generatingListErrorMessage = null
+  let generatingPercentage
+  $: generatingPercentage = 0
+  let isSuccessList: boolean
+  $: isSuccessList = false
+  async function generateList (): Promise<void> {
+    const tracks = []
+    try {
+      isGeneratingList = true
+      generatingPercentage = 0
+      // sort by date desc so we prioritize older versions
+      const albumsByDate = orderBy(albums, 'release_date', 'desc')
+      for (const album of albumsByDate) {
+        if (nonSelectedAlbums[album.id]) {
+          generatingPercentage += 1 / albums.length
+          continue
+        }
+
+        console.log('selected', album)
+        const albumTracks = await searchTracks(accessToken, album)
+        tracks.push(...albumTracks)
+      }
+      console.log(tracks)
+      isSuccessList = true
+    } catch (e) {
+      generatingListErrorMessage = e.message
+    } finally {
+      isGeneratingList = false
+    }
+  }
+
 </script>
 
 {#if isLoading}
@@ -36,12 +80,26 @@
 {:else}
   <div class="album-container">
     {#each albums as album (album.id)}
-      <div class="album">
+      <div class="album {nonSelectedAlbums[album.id] ? '' : 'album--selected'}" on:click={() => { handleClick(album.id) }}>
         <p class="album-title">
           {album.name}
         </p>
       </div>
     {/each}
+  </div>
+
+  <div>
+    <input type="text" bind:value="{playlistName}">
+    <button class="generate-playlist" on:click={generateList}>Generate</button>
+    {#if isGeneratingList}
+      {(generatingPercentage * 100).toFixed(0) + '%'}
+    {/if}
+    { #if !isNil(generatingListErrorMessage)}
+      <p class="error-message">{generatingListErrorMessage}</p>
+    {/if}
+    {#if isSuccessList}
+      <p class="success-message">Success</p>
+    {/if}
   </div>
 
 {/if}
@@ -90,11 +148,14 @@
       transform: scale(1.01, 1.01);
   }
 
+  .album--selected {
+    border: 2px groove dimgray;
+  }
+
   .album-title {
       align-self: center;
       font-size: 0.8rem;
 
-      /**Major Properties**/
       overflow:hidden;
       line-height: 1rem;
       max-height: 2rem;
@@ -104,5 +165,23 @@
       text-overflow: ellipsis;
       -webkit-line-clamp: 2;
       margin: 0px;
+      user-select: none;
   }
+
+  .generate-playlist {
+      background: dodgerblue;
+      color: white;
+      border-radius: 2px;
+      border: 2px groove dodgerblue;
+  }
+
+  .generate-playlist:hover {
+      transform: scale(1.01, 1.01);
+  }
+
+  .success-message {
+      color: green;
+      font-weight: bold;
+  }
+
 </style>

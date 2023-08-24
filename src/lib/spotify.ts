@@ -1,8 +1,8 @@
 import type { UserProfile } from '$lib/types/spotify'
 import * as spotify from '@spotify/web-api-ts-sdk'
-import { getTimeAfterSeconds, isNil, isTimeExpired } from '$lib/utils'
+import {compareTwoStrings, getTimeAfterSeconds, isNil, isTimeExpired} from '$lib/utils'
 import { type Artist, type Page } from '@spotify/web-api-ts-sdk/src/types'
-import { type AccessToken, type SimplifiedAlbum } from '@spotify/web-api-ts-sdk'
+import { type AccessToken, type SimplifiedAlbum, type SimplifiedTrack } from '@spotify/web-api-ts-sdk'
 
 const ACCESS_TOKEN_KEY = 'access_token_key_v3'
 export const clientId = '8f5ffc8e8f4e4ccf8c0c241cf6092d6b'
@@ -96,7 +96,7 @@ export async function getAccessToken (clientId: string, code: string): Promise<A
     throw new Error(resultAsJson.error)
   }
 
-  const accessTokenWithExpiration: AccessTokenWithExpiration = {expiration: getTimeAfterSeconds(resultAsJson.expires_in), accessToken: resultAsJson }
+  const accessTokenWithExpiration: AccessTokenWithExpiration = { expiration: getTimeAfterSeconds(resultAsJson.expires_in), accessToken: resultAsJson }
   localStorage.setItem(ACCESS_TOKEN_KEY, JSON.stringify(accessTokenWithExpiration))
   return resultAsJson
 }
@@ -129,7 +129,52 @@ export async function searchAlbums (token: AccessToken, artist: Artist): Promise
   return albums.items
 }
 
+export async function searchTracks (token: AccessToken, album: SimplifiedAlbum): Promise<SimplifiedTrack[]> {
+  const sdk = spotify.SpotifyApi.withAccessToken(clientId, token)
+  const tracks = await sdk.albums.tracks(album.id)
+  return tracks.items
+}
+
+export interface SelectedTrack {
+  selected: boolean
+  track: SimplifiedTrack
+}
+export function dedupeTracks (tracks: SimplifiedTrack[]): SelectedTrack[] {
+  const result: SelectedTrack[] = []
+  // eslint-disable-next-line no-labels
+  mainLoop: for (let i = 0; i < tracks.length; i++) {
+    const track1 = tracks[i]
+    for (let j = i + 1; j < tracks.length; j++) {
+      const track2 = tracks[2]
+      if (isSongDuped(track1.name, track2.name)) {
+        result.push({
+          selected: false,
+          track: track1
+        })
+        // eslint-disable-next-line no-labels
+        continue mainLoop
+      }
+    }
+    result.push({
+      selected: true,
+      track: track1
+    })
+  }
+  return result
+}
+
+export function isSongDuped (firstSong: string, secondSong: string): boolean {
+  // Rudy - Live At Hammersmith Odeon / 1975 should not be pushed if Rudy is there
+  return isSongLive(firstSong) || (!isSongLive(secondSong) && (firstSong.startsWith(secondSong) || compareTwoStrings(firstSong, secondSong) > 0.6))
+}
+
+export function isSongLive (songName: string): boolean {
+  const liveRegexes = [/-.*Directo.*/i, /-.*Live At.*/i]
+  return liveRegexes.find(r => songName.match(r)) !== undefined
+}
+
 interface AccessTokenWithExpiration {
   expiration: number // number instead of date to be able to searialize properly
   accessToken: AccessToken
 }
+

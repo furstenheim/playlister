@@ -22,6 +22,9 @@
       ({ items: artists } = await searchArtists(token, query))
     }
   }, 100) as unknown as FormEventHandler<HTMLInputElement> // formateventhandler expects current target but we will receive target since it is not immediately processed
+  setTimeout(() => {
+    handleInput({ target: { value: 'eagles' } }, 200)
+  })
 </script>
 
 <p>Welcome {name}</p>
