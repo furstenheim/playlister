@@ -12,6 +12,9 @@ import typescript from '@rollup/plugin-typescript'
 import serve from 'rollup-plugin-serve'
 import livereload from 'rollup-plugin-livereload'
 
+// publish prod to docs for github
+const rootFolder = process.env.production ? 'docs' : 'build'
+
 const plugins = [
   alias({
     resolve: ['.ts'],
@@ -33,17 +36,17 @@ if (process.env.production) {
   plugins.push(terser());
 } else {
   plugins.push(serve({
-    contentBase: 'public',
+    contentBase: rootFolder,
     // https://github.com/thgh/rollup-plugin-serve
     port: 5173,
     open: true
-  }), livereload('public'))
+  }), livereload(rootFolder))
 }
 
 export default {
   input: 'src/main.ts',
   output: {
-    file: 'public/build/main.js',
+    file: `${rootFolder}/build/main.js`,
     format: 'iife',
     name: 'app'
   },
