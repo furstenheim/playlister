@@ -22,14 +22,14 @@
       ({ items: artists } = await searchArtists(token, query))
     }
   }, 100) as unknown as FormEventHandler<HTMLInputElement> // formateventhandler expects current target but we will receive target since it is not immediately processed
-  setTimeout(() => {
+  /*setTimeout(() => {
     handleInput({ target: { value: 'eagles' } }, 200)
-  })
+  })*/
 </script>
 
 <p>Welcome {name}</p>
 
-<input on:input={handleInput} type="text">
+<input on:input={handleInput} type="text" placeholder="e.g. Eagles...">
 
 <ul style="list-style-type: none; padding-left: 0">
   {#each artists.slice(0, 10) as artist (artist.id)}

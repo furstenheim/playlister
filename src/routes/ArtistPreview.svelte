@@ -14,9 +14,9 @@
     isOpen = !isOpen
   }
 
-  if (artist.name === 'Eagles') {
+  /*if (artist.name === 'Eagles') {
     handleClick()
-  }
+  }*/
 </script>
 
 <div class="artist-container" on:click="{handleClick}">

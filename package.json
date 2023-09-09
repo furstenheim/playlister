@@ -5,6 +5,7 @@
 	"scripts": {
 		"dev": "rollup -cw",
 		"build": "rollup -c",
+		"build:prod": "production=true rollup -c",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",

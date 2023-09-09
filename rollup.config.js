@@ -13,7 +13,7 @@ import serve from 'rollup-plugin-serve'
 import livereload from 'rollup-plugin-livereload'
 
 // publish prod to docs for github
-const rootFolder = process.env.production ? 'docs' : 'build'
+const rootFolder = process.env.production ? 'docs' : 'public'
 
 const plugins = [
   alias({

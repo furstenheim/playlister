@@ -102,6 +102,7 @@
   </div>
 
   <div>
+    <p style="font-weight: bold">Playlist Name</p>
     <input type="text" bind:value="{playlistName}">
     <button class="generate-playlist" on:click={generateList}>Generate</button>
     {#if isGeneratingList}

@@ -6,20 +6,7 @@ import { type AccessToken, type Playlist, type SimplifiedAlbum, type SimplifiedT
 
 const ACCESS_TOKEN_KEY = 'access_token_key_v3'
 export const clientId = '8f5ffc8e8f4e4ccf8c0c241cf6092d6b'
-/*
-const clientId = '8f5ffc8e8f4e4ccf8c0c241cf6092d6b'
-const params = new URLSearchParams(window.location.search)
-const code = params.get('code')
-
-if (!code) {
-  redirectToAuthCodeFlow(clientId)
-} else {
-  const accessToken = await getAccessToken(clientId, code)
-  const profile = await fetchProfile(accessToken)
-  populateUI(profile)
-}
-*/
-
+const CURRENT_WEBSITE = window.location.host.match('localhost') ? `http://${window.location.host}` : `https://${window.location.host}`
 // verbatim from https://developer.spotify.com/documentation/web-api/howtos/web-app-profile
 export async function getAuthRedirect (clientId: string): Promise<string> {
   const verifier = generateCodeVerifier(128)
@@ -30,7 +17,7 @@ export async function getAuthRedirect (clientId: string): Promise<string> {
   const params = new URLSearchParams()
   params.append('client_id', clientId)
   params.append('response_type', 'code')
-  params.append('redirect_uri', 'http://localhost:5173')
+  params.append('redirect_uri', CURRENT_WEBSITE)
   params.append('scope', 'user-read-private user-read-email playlist-modify-private playlist-modify-public')
   params.append('code_challenge_method', 'S256')
   params.append('code_challenge', challenge)
@@ -79,7 +66,7 @@ export async function getAccessToken (clientId: string, code: string): Promise<A
   params.append('client_id', clientId)
   params.append('grant_type', 'authorization_code')
   params.append('code', code)
-  params.append('redirect_uri', 'http://localhost:5173')
+  params.append('redirect_uri', CURRENT_WEBSITE)
   params.append('code_verifier', verifier!)
 
   const result = await fetch('https://accounts.spotify.com/api/token?', {
